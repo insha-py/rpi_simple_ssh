@@ -26,11 +26,21 @@ open_ssh_terminal() {
     local device_name="$1"
     local connection_string="$2"
     
-    # Parse connection string (user@ip:port)
-    local user_host=$(echo "$connection_string" | cut -d':' -f1)
-    local port=$(echo "$connection_string" | cut -d':' -f2)
+    # Parse connection string - check if port is specified
+    local user_host
+    local ssh_command
     
-    local ssh_command="ssh -p $port $user_host"
+    if [[ "$connection_string" == *":"* ]]; then
+        # Port is specified (user@ip:port format)
+        user_host=$(echo "$connection_string" | cut -d':' -f1)
+        local port=$(echo "$connection_string" | cut -d':' -f2)
+        ssh_command="ssh -p $port $user_host"
+    else
+        # No port specified (user@ip format)
+        user_host="$connection_string"
+        ssh_command="ssh $user_host"
+    fi
+    
     local window_title="SSH - $device_name ($user_host)"
     
     echo -e "${YELLOW}Opening terminal for $device_name...${NC}"
