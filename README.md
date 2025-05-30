@@ -1,47 +1,17 @@
 # Multi-SSH Terminal Launcher
 
-This repository contains scripts to easily open multiple terminal windows for SSH connections to different devices on your network. Two versions are provided:
-
-- **`multi_ssh.ps1`** - PowerShell script for Windows
-- **`multi_ssh.sh`** - Bash script for Linux, macOS, and WSL
+A simple bash script to easily open multiple terminal windows for SSH connections to different devices on your network.
 
 ## Features
 
 - 🖥️ **Multiple Terminal Windows**: Opens separate terminal windows for each SSH connection
 - 📋 **Interactive Menu**: Choose specific devices or connect to all at once
 - 🏷️ **Custom Window Titles**: Each terminal window is labeled with the device name
-- 🔧 **Easy Configuration**: Simple arrays to define your network devices
+- 🔧 **Easy Configuration**: Simple associative array to define your network devices
 - 🎨 **Colored Output**: Clear visual feedback with colored text
-- 🔄 **Cross-Platform**: Works on Windows, Linux, macOS, and WSL
+- 🔄 **Cross-Platform**: Works on Linux, macOS, and WSL/Git Bash on Windows
 
 ## Quick Start
-
-### Windows (PowerShell)
-
-1. **Edit the device configuration** in `multi_ssh.ps1`:
-   ```powershell
-   $devices = @(
-       @{
-           name = "Your Router"
-           ip = "192.168.1.1"
-           user = "admin"
-           port = 22
-       },
-       @{
-           name = "Your Server"
-           ip = "192.168.1.100"
-           user = "username"
-           port = 22
-       }
-   )
-   ```
-
-2. **Run the script**:
-   ```powershell
-   .\multi_ssh.ps1
-   ```
-
-### Linux/macOS/WSL (Bash)
 
 1. **Make the script executable**:
    ```bash
@@ -51,8 +21,8 @@ This repository contains scripts to easily open multiple terminal windows for SS
 2. **Edit the device configuration** in `multi_ssh.sh`:
    ```bash
    declare -A devices=(
-       ["Router"]="admin@192.168.1.1:22"
-       ["Server"]="username@192.168.1.100:22"
+       ["rpi_dawg2"]="dawg2@192.168.0.139"
+       ["rpi_dawg6"]="dawg6@192.168.0.142"
    )
    ```
 
@@ -63,28 +33,25 @@ This repository contains scripts to easily open multiple terminal windows for SS
 
 ## Configuration
 
-### PowerShell Script Configuration
-
-Edit the `$devices` array in `multi_ssh.ps1`:
-
-```powershell
-$devices = @(
-    @{
-        name = "Device Name"        # Friendly name for the device
-        ip = "192.168.1.xxx"       # IP address
-        user = "username"          # SSH username
-        port = 22                  # SSH port (usually 22)
-    }
-)
-```
-
-### Bash Script Configuration
-
 Edit the `devices` associative array in `multi_ssh.sh`:
 
 ```bash
 declare -A devices=(
-    ["DeviceName"]="username@192.168.1.xxx:port"
+    ["Router"]="admin@192.168.1.1:22"
+    ["NAS"]="admin@192.168.1.5:22"
+    ["RaspberryPi"]="pi@192.168.1.20:22"
+    ["HomeServer"]="user@192.168.1.100:22"
+)
+```
+
+**Note**: If you need to specify a non-standard SSH port, use the format `"username@ip:port"`. If no port is specified, the default SSH port (22) will be used.
+
+**Current Configuration Example (Raspberry Pi setup):**
+```bash
+# Current setup
+declare -A devices=(
+    ["rpi_dawg2"]="dawg2@192.168.0.139"
+    ["rpi_dawg6"]="dawg6@192.168.0.142"
 )
 ```
 
@@ -93,18 +60,7 @@ declare -A devices=(
 ### Example Device Configurations
 
 **Home Network Setup:**
-```powershell
-# PowerShell
-$devices = @(
-    @{ name = "Router"; ip = "192.168.1.1"; user = "admin"; port = 22 },
-    @{ name = "NAS"; ip = "192.168.1.5"; user = "admin"; port = 22 },
-    @{ name = "Raspberry Pi"; ip = "192.168.1.20"; user = "pi"; port = 22 },
-    @{ name = "Home Server"; ip = "192.168.1.100"; user = "user"; port = 22 }
-)
-```
-
 ```bash
-# Bash
 declare -A devices=(
     ["Router"]="admin@192.168.1.1:22"
     ["NAS"]="admin@192.168.1.5:22"
@@ -114,43 +70,27 @@ declare -A devices=(
 ```
 
 **Office Network Setup:**
-```powershell
-# PowerShell
-$devices = @(
-    @{ name = "Web Server"; ip = "10.0.1.10"; user = "deploy"; port = 22 },
-    @{ name = "Database Server"; ip = "10.0.1.11"; user = "dbadmin"; port = 22 },
-    @{ name = "Load Balancer"; ip = "10.0.1.5"; user = "admin"; port = 2222 }
+```bash
+declare -A devices=(
+    ["Web Server"]="deploy@10.0.1.10:22"
+    ["Database Server"]="dbadmin@10.0.1.11:22"
+    ["Load Balancer"]="admin@10.0.1.5:2222"
 )
 ```
 
 ## Prerequisites
 
-### Windows
-- PowerShell (built into Windows)
-- SSH client (available in Windows 10/11 by default, or install OpenSSH)
-- Optional: Windows Terminal (for better experience)
-
-### Linux
-- Bash shell
-- SSH client (`openssh-client`)
-- Terminal emulator (gnome-terminal, konsole, or xterm)
-
-### macOS
-- Bash shell (built-in)
-- SSH client (built-in)
-- Terminal app (built-in)
-
-### WSL (Windows Subsystem for Linux)
-- WSL enabled with a Linux distribution
-- SSH client
+- **Linux**: Bash shell, SSH client (`openssh-client`), Terminal emulator (gnome-terminal, konsole, or xterm)
+- **macOS**: Bash shell (built-in), SSH client (built-in), Terminal app (built-in)
+- **Windows**: WSL/Git Bash, SSH client
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **"ssh: command not found"**
-   - **Windows**: Install OpenSSH client feature or use Git Bash
    - **Linux**: Install openssh-client: `sudo apt install openssh-client`
+   - **Windows/Git Bash**: Install OpenSSH client feature or ensure Git Bash is properly installed
 
 2. **"Permission denied (publickey)"**
    - Set up SSH key authentication or use password authentication
@@ -160,11 +100,6 @@ $devices = @(
    - Check if SSH service is running on the target device
    - Verify the IP address and port number
    - Check firewall settings
-
-4. **PowerShell execution policy error**
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-   ```
 
 ### Terminal Emulator Detection
 
@@ -247,4 +182,4 @@ If you encounter issues or have questions:
 1. Check the troubleshooting section above
 2. Verify your network configuration
 3. Test SSH connections manually first
-4. Open an issue with detailed information about your setup 
+4. Open an issue with detailed information about your setup
