@@ -64,6 +64,8 @@ load_config() {
         return 1
     fi
     
+    echo -e "${CYAN}Loading configuration from '$CONFIG_FILE'...${NC}"
+    
     # Read the config file and populate arrays
     while IFS='=' read -r key value; do
         # Skip comments and empty lines
@@ -77,13 +79,19 @@ load_config() {
         # Handle special configuration variables
         if [[ "$key" == "DOWNLOADS_SUBFOLDER" ]]; then
             DOWNLOADS_SUBFOLDER="$value"
+            echo -e "  ${GREEN}✓${NC} Downloads subfolder: ${WHITE}$value${NC}"
         elif [[ "$key" == "SPECIFIC_COMMAND" ]]; then
             SPECIFIC_COMMAND="$value"
+            echo -e "  ${GREEN}✓${NC} Specific command: ${WHITE}$value${NC}"
         else
             # Assume it's a device password
             passwords["$key"]="$value"
+            echo -e "  ${GREEN}✓${NC} Password configured for: ${WHITE}$key${NC}"
         fi
     done < "$CONFIG_FILE"
+    
+    echo -e "${GREEN}Configuration loaded successfully!${NC}"
+    echo ""
     
     return 0
 }
@@ -117,22 +125,26 @@ open_ssh_terminal() {
         port="22"
     fi
     
-    # Create the automated SSH command sequence
-    local ssh_command="sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no $user_host"
-    local automation_script="$ssh_command << 'EOF'
+    # Create a temporary script for remote execution
+    local temp_script="/tmp/ssh_automation_$$_$(date +%s).sh"
+    cat > "$temp_script" << EOF
+#!/bin/bash
 echo 'Connected to $device_name successfully!'
 echo 'Navigating to Downloads folder...'
 cd ~/Downloads || { echo 'Downloads folder not found'; exit 1; }
-echo 'Current directory: \$(pwd)'
+echo "Current directory: \$(pwd)"
 echo 'Navigating to subfolder: $DOWNLOADS_SUBFOLDER'
 cd '$DOWNLOADS_SUBFOLDER' || { echo 'Subfolder $DOWNLOADS_SUBFOLDER not found'; exit 1; }
-echo 'Current directory: \$(pwd)'
+echo "Current directory: \$(pwd)"
 echo 'Executing specific command...'
 $SPECIFIC_COMMAND
 echo 'Command execution completed!'
-echo 'Keeping session open...'
-bash
-EOF"
+echo 'Automation finished. You now have an interactive shell.'
+echo '================================================'
+EOF
+    
+    # Create the automation script that will be run in the terminal
+    local automation_script="sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no $user_host 'bash -s' < '$temp_script' && sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no $user_host; rm -f '$temp_script'"
     
     local window_title="SSH - $device_name ($user_host) - Automated"
     
