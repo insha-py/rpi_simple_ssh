@@ -150,32 +150,20 @@ EOF
     
     echo -e "${YELLOW}Opening automated terminal for $device_name...${NC}"
     
-    # Detect the operating system and available terminal emulators
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
-        if command -v gnome-terminal >/dev/null 2>&1; then
-            gnome-terminal --title="$window_title" -- bash -c "$automation_script"
-        elif command -v konsole >/dev/null 2>&1; then
-            konsole --title "$window_title" -e bash -c "$automation_script"
-        elif command -v xterm >/dev/null 2>&1; then
-            xterm -title "$window_title" -e bash -c "$automation_script" &
-        else
-            echo -e "${RED}No compatible terminal emulator found${NC}"
-            return 1
-        fi
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        osascript -e "tell application \"Terminal\" to do script \"$automation_script\""
-    elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        # Git Bash on Windows or Cygwin
-        if command -v mintty >/dev/null 2>&1; then
-            mintty -t "$window_title" -e bash -c "$automation_script" &
-        else
-            # Fall back to starting a new bash session
-            bash -c "$automation_script" &
-        fi
+    # Linux terminal emulator detection
+    if command -v gnome-terminal >/dev/null 2>&1; then
+        gnome-terminal --title="$window_title" -- bash -c "$automation_script"
+    elif command -v konsole >/dev/null 2>&1; then
+        konsole --title "$window_title" -e bash -c "$automation_script"
+    elif command -v xfce4-terminal >/dev/null 2>&1; then
+        xfce4-terminal --title="$window_title" -e bash -c "$automation_script"
+    elif command -v mate-terminal >/dev/null 2>&1; then
+        mate-terminal --title="$window_title" -e bash -c "$automation_script"
+    elif command -v xterm >/dev/null 2>&1; then
+        xterm -title "$window_title" -e bash -c "$automation_script" &
     else
-        echo -e "${RED}Unsupported operating system: $OSTYPE${NC}"
+        echo -e "${RED}No compatible Linux terminal emulator found${NC}"
+        echo -e "${YELLOW}Please install one of: gnome-terminal, konsole, xfce4-terminal, mate-terminal, or xterm${NC}"
         return 1
     fi
     
@@ -227,32 +215,20 @@ open_manual_ssh_terminal() {
     
     echo -e "${YELLOW}Opening manual terminal for $device_name...${NC}"
     
-    # Detect the operating system and available terminal emulators
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Linux
-        if command -v gnome-terminal >/dev/null 2>&1; then
-            gnome-terminal --title="$window_title" -- bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
-        elif command -v konsole >/dev/null 2>&1; then
-            konsole --title "$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
-        elif command -v xterm >/dev/null 2>&1; then
-            xterm -title "$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash" &
-        else
-            echo -e "${RED}No compatible terminal emulator found${NC}"
-            return 1
-        fi
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        osascript -e "tell application \"Terminal\" to do script \"echo 'Connecting to $device_name...'; $ssh_command\""
-    elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        # Git Bash on Windows or Cygwin
-        if command -v mintty >/dev/null 2>&1; then
-            mintty -t "$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash" &
-        else
-            # Fall back to starting a new bash session
-            bash -c "echo 'Connecting to $device_name...'; $ssh_command" &
-        fi
+    # Linux terminal emulator detection
+    if command -v gnome-terminal >/dev/null 2>&1; then
+        gnome-terminal --title="$window_title" -- bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
+    elif command -v konsole >/dev/null 2>&1; then
+        konsole --title "$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
+    elif command -v xfce4-terminal >/dev/null 2>&1; then
+        xfce4-terminal --title="$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
+    elif command -v mate-terminal >/dev/null 2>&1; then
+        mate-terminal --title="$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
+    elif command -v xterm >/dev/null 2>&1; then
+        xterm -title "$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash" &
     else
-        echo -e "${RED}Unsupported operating system: $OSTYPE${NC}"
+        echo -e "${RED}No compatible Linux terminal emulator found${NC}"
+        echo -e "${YELLOW}Please install one of: gnome-terminal, konsole, xfce4-terminal, mate-terminal, or xterm${NC}"
         return 1
     fi
     
@@ -266,17 +242,18 @@ edit_config() {
         create_sample_config
     fi
     
-    # Try to open with available editors
+    # Try to open with available Linux text editors
     if command -v nano >/dev/null 2>&1; then
         nano "$CONFIG_FILE"
     elif command -v vim >/dev/null 2>&1; then
         vim "$CONFIG_FILE"
     elif command -v vi >/dev/null 2>&1; then
         vi "$CONFIG_FILE"
-    elif command -v notepad >/dev/null 2>&1; then
-        notepad "$CONFIG_FILE"
+    elif command -v gedit >/dev/null 2>&1; then
+        gedit "$CONFIG_FILE"
     else
         echo -e "${RED}No text editor found. Please edit '$CONFIG_FILE' manually.${NC}"
+        echo -e "${YELLOW}Install nano, vim, vi, or gedit to use this feature.${NC}"
         return 1
     fi
     
