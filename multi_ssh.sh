@@ -5,8 +5,8 @@
 
 # Configuration - Edit these arrays to match your network devices
 declare -A devices=(
-    ["rpi_dawg2"]="dawg2@192.168.0.139"
-    ["rpi_dawg6"]="dawg6@192.168.0.142"
+    ["rpi_dawg2"]="dawg2@192.168.0.139" #dawg2
+    ["rpi_dawg6"]="dawg6@192.168.0.142" #dawg6
 )
 # Colors for output
 RED='\033[0;31m'
