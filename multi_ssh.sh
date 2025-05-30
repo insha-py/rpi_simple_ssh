@@ -5,12 +5,9 @@
 
 # Configuration - Edit these arrays to match your network devices
 declare -A devices=(
-    ["Router"]="admin@192.168.1.1:22"
-    ["Server1"]="user@192.168.1.10:22"
-    ["Server2"]="root@192.168.1.11:22"
-    ["RaspberryPi"]="pi@192.168.1.20:22"
+    ["rpi_dawg2"]="user@192.168.0.139"
+    ["rpi_dawg6"]="root@192.168.0.142"
 )
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -18,7 +15,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+NC='\033[0m' 
 
 echo -e "${GREEN}Multi-SSH Terminal Launcher${NC}"
 echo -e "${GREEN}===========================${NC}"
