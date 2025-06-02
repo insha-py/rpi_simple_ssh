@@ -102,8 +102,18 @@ open_ssh_terminal() {
         port="22"
     fi
     
-    # Create automation script with navigation to Downloads/raspberry_camera_capture
-    local automation_script="echo 'Connecting to $device_name at $user_host:$port...'; echo 'Password will be provided automatically'; sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user_host \"echo 'Connected successfully to $device_name!'; echo 'Current directory:'; pwd; echo ''; echo 'Navigating to Downloads folder...'; cd ~/Downloads && echo 'Successfully entered Downloads directory' || { echo 'Downloads folder not found, staying in home directory'; exit 1; }; echo 'Current directory:'; pwd; echo ''; echo 'Navigating to raspberry_pie_camera_capture subdirectory...'; cd raspberry_pie_camera_capture && echo 'Successfully entered raspberry_pie_camera_capture directory' || { echo 'raspberry_pie_camera_capture folder not found in Downloads'; exit 1; }; echo 'Current directory:'; pwd; echo ''; echo 'Directory contents:'; ls -la; echo ''; echo 'Ready to work! You are now in the raspberry_pie_camera_capture directory.'; echo '========================================'; exec bash -l\"; echo 'SSH session ended. Press Enter to close...'; read"
+    # Create automation script with navigation and command execution
+    local remote_commands="echo 'Connected successfully to $device_name!'; echo 'Current directory:'; pwd; echo ''; echo 'Navigating to Downloads folder...'; cd ~/Downloads && echo 'Successfully entered Downloads directory' || { echo 'Downloads folder not found, staying in home directory'; exit 1; }; echo 'Current directory:'; pwd;"
+    
+    # Add subfolder navigation if specified
+    if [[ -n "$DOWNLOADS_SUBFOLDER" ]]; then
+        remote_commands="$remote_commands echo ''; echo 'Navigating to $DOWNLOADS_SUBFOLDER subdirectory...'; cd '$DOWNLOADS_SUBFOLDER' && echo 'Successfully entered $DOWNLOADS_SUBFOLDER directory' || { echo '$DOWNLOADS_SUBFOLDER folder not found in Downloads'; exit 1; }; echo 'Current directory:'; pwd;"
+    fi
+    
+    # Add directory listing and command execution
+    remote_commands="$remote_commands echo ''; echo 'Directory contents:'; ls -la; echo ''; echo 'Executing configured command: $SPECIFIC_COMMAND'; echo '========================================'; $SPECIFIC_COMMAND; echo '========================================'; echo 'Command execution completed. You now have an interactive shell.'; exec bash -l"
+    
+    local automation_script="echo 'Connecting to $device_name at $user_host:$port...'; echo 'Password will be provided automatically'; sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user_host \"$remote_commands\"; echo 'SSH session ended. Press Enter to close...'; read"
     
     local window_title="SSH - $device_name ($user_host)"
     
