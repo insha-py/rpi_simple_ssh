@@ -17,8 +17,8 @@ CONFIG_FILE="ssh_config.conf"
 declare -A passwords=()
 
 # Navigation and command configuration
-DOWNLOADS_SUBFOLDER="your_subfolder_name"  # Replace with actual subfolder name in Downloads
-SPECIFIC_COMMAND="echo 'Placeholder command - replace with your actual command'"  # Replace with your specific command
+DOWNLOADS_SUBFOLDER="raspie_camera_capture"  # Replace with actual subfolder name in Downloads
+SPECIFIC_COMMAND="echo 'Ready to work in raspie_camera_capture directory'"  # Replace with your specific command
 
 # Colors for output
 RED='\033[0;31m'
@@ -102,8 +102,8 @@ open_ssh_terminal() {
         port="22"
     fi
     
-    # Create a simpler automation script
-    local automation_script="echo 'Connecting to $device_name at $user_host:$port...'; echo 'Password will be provided automatically'; sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user_host; echo 'SSH session ended. Press Enter to close...'; read"
+    # Create automation script with navigation to Downloads/raspie_camera_capture
+    local automation_script="echo 'Connecting to $device_name at $user_host:$port...'; echo 'Password will be provided automatically'; sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user_host \"echo 'Connected successfully to $device_name!'; echo 'Current directory:'; pwd; echo ''; echo 'Navigating to Downloads folder...'; cd ~/Downloads && echo 'Successfully entered Downloads directory' || { echo 'Downloads folder not found, staying in home directory'; exit 1; }; echo 'Current directory:'; pwd; echo ''; echo 'Navigating to raspie_camera_capture subdirectory...'; cd raspie_camera_capture && echo 'Successfully entered raspie_camera_capture directory' || { echo 'raspie_camera_capture folder not found in Downloads'; exit 1; }; echo 'Current directory:'; pwd; echo ''; echo 'Directory contents:'; ls -la; echo ''; echo 'Ready to work! You are now in the raspie_camera_capture directory.'; echo '========================================'; exec bash -l\"; echo 'SSH session ended. Press Enter to close...'; read"
     
     local window_title="SSH - $device_name ($user_host)"
     
