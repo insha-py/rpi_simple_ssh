@@ -33,34 +33,11 @@ echo -e "${GREEN}Multi-SSH Terminal Launcher${NC}"
 echo -e "${GREEN}===========================${NC}"
 echo ""
 
-# Function to create a sample config file
-create_sample_config() {
-    cat > "$CONFIG_FILE" << 'EOF'
-# SSH Configuration File
-# Add your device passwords here
-# Format: DEVICE_NAME=password
-
-# Example entries (replace with your actual passwords):
-rpi_dawg2=your_password_here
-rpi_dawg6=your_password_here
-
-# Navigation settings
-DOWNLOADS_SUBFOLDER=your_subfolder_name
-
-# Command to execute after navigation
-SPECIFIC_COMMAND=echo 'Placeholder command - replace with your actual command'
-EOF
-    echo -e "${GREEN}Sample configuration file '$CONFIG_FILE' created.${NC}"
-    echo -e "${YELLOW}Please edit '$CONFIG_FILE' with your actual passwords and settings.${NC}"
-    echo -e "${RED}Important: Add '$CONFIG_FILE' to your .gitignore file!${NC}"
-}
-
 # Function to load configuration from file
 load_config() {
     if [[ ! -f "$CONFIG_FILE" ]]; then
-        echo -e "${YELLOW}Configuration file '$CONFIG_FILE' not found.${NC}"
-        echo -e "${YELLOW}Creating sample configuration file...${NC}"
-        create_sample_config
+        echo -e "${RED}Error: Configuration file '$CONFIG_FILE' not found.${NC}"
+        echo -e "${YELLOW}Please ensure your ssh_config.conf file exists in the current directory.${NC}"
         return 1
     fi
     
@@ -238,8 +215,9 @@ open_manual_ssh_terminal() {
 # Function to edit configuration
 edit_config() {
     if [[ ! -f "$CONFIG_FILE" ]]; then
-        echo -e "${YELLOW}Configuration file not found. Creating sample...${NC}"
-        create_sample_config
+        echo -e "${RED}Error: Configuration file '$CONFIG_FILE' not found.${NC}"
+        echo -e "${YELLOW}Please ensure your ssh_config.conf file exists in the current directory.${NC}"
+        return 1
     fi
     
     # Try to open with available Linux text editors
@@ -286,7 +264,7 @@ while true; do
             elif [[ "$SSHPASS_AVAILABLE" == "true" ]]; then
                 echo -e "${GREEN}Opening automated terminals for all devices...${NC}"
                 for device_name in "${device_names[@]}"; do
-                    local password="${passwords[$device_name]}"
+                    password="${passwords[$device_name]}"
                     if [[ -n "$password" && "$password" != "your_password_here" ]]; then
                         open_ssh_terminal "$device_name" "${devices[$device_name]}" "$password"
                     else
@@ -303,7 +281,7 @@ while true; do
             show_device_menu
             read -p "Select device for manual connection: " manual_choice
             if [[ "$manual_choice" =~ ^[0-9]+$ ]] && [ "$manual_choice" -ge 1 ] && [ "$manual_choice" -le "${#device_names[@]}" ]; then
-                local selected_device="${device_names[$((manual_choice-1))]}"
+                selected_device="${device_names[$((manual_choice-1))]}"
                 open_manual_ssh_terminal "$selected_device" "${devices[$selected_device]}"
             else
                 echo -e "${RED}Invalid selection for manual mode.${NC}"
@@ -319,8 +297,8 @@ while true; do
             ;;
         *)
             if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#device_names[@]}" ]; then
-                local selected_device="${device_names[$((choice-1))]}"
-                local password="${passwords[$selected_device]}"
+                selected_device="${device_names[$((choice-1))]}"
+                password="${passwords[$selected_device]}"
                 if [[ "$CONFIG_LOADED" -eq 0 ]] && [[ "$SSHPASS_AVAILABLE" == "true" ]] && [[ -n "$password" && "$password" != "your_password_here" ]]; then
                     open_ssh_terminal "$selected_device" "${devices[$selected_device]}" "$password"
                 else
