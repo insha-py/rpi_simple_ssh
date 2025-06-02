@@ -102,45 +102,71 @@ open_ssh_terminal() {
         port="22"
     fi
     
-    # Create a temporary script for remote execution
-    local temp_script="/tmp/ssh_automation_$$_$(date +%s).sh"
-    cat > "$temp_script" << EOF
-#!/bin/bash
-echo 'Connected to $device_name successfully!'
-echo 'Navigating to Downloads folder...'
-cd ~/Downloads || { echo 'Downloads folder not found'; exit 1; }
-echo "Current directory: \$(pwd)"
-echo 'Navigating to subfolder: $DOWNLOADS_SUBFOLDER'
-cd '$DOWNLOADS_SUBFOLDER' || { echo 'Subfolder $DOWNLOADS_SUBFOLDER not found'; exit 1; }
-echo "Current directory: \$(pwd)"
-echo 'Executing specific command...'
-$SPECIFIC_COMMAND
-echo 'Command execution completed!'
-echo 'Automation finished. You now have an interactive shell.'
-echo '================================================'
-EOF
+    # Create a simpler automation script
+    local automation_script="echo 'Connecting to $device_name at $user_host:$port...'; echo 'Password will be provided automatically'; sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user_host; echo 'SSH session ended. Press Enter to close...'; read"
     
-    # Create the automation script that will be run in the terminal
-    local automation_script="sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no $user_host 'bash -s' < '$temp_script' && sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no $user_host; rm -f '$temp_script'"
-    
-    local window_title="SSH - $device_name ($user_host) - Automated"
+    local window_title="SSH - $device_name ($user_host)"
     
     echo -e "${YELLOW}Opening automated terminal for $device_name...${NC}"
+    echo -e "${CYAN}Debug: Connecting to $user_host:$port${NC}"
     
-    # Linux terminal emulator detection
-    if command -v gnome-terminal >/dev/null 2>&1; then
+    # Raspberry Pi / Linux terminal detection with better fallbacks
+    if command -v x-terminal-emulator >/dev/null 2>&1; then
+        # Debian/Ubuntu default terminal alternative
+        echo -e "${CYAN}Using system default terminal emulator...${NC}"
+        x-terminal-emulator -T "$window_title" -e bash -c "$automation_script" &
+    elif command -v lxterminal >/dev/null 2>&1; then
+        # LXDE terminal (common on Raspberry Pi OS Lite)
+        echo -e "${CYAN}Using LXTerminal...${NC}"
+        lxterminal --title="$window_title" -e bash -c "$automation_script" &
+    elif command -v gnome-terminal >/dev/null 2>&1; then
+        echo -e "${CYAN}Using GNOME Terminal...${NC}"
         gnome-terminal --title="$window_title" -- bash -c "$automation_script"
-    elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "$window_title" -e bash -c "$automation_script"
     elif command -v xfce4-terminal >/dev/null 2>&1; then
+        echo -e "${CYAN}Using XFCE Terminal...${NC}"
         xfce4-terminal --title="$window_title" -e bash -c "$automation_script"
     elif command -v mate-terminal >/dev/null 2>&1; then
+        echo -e "${CYAN}Using MATE Terminal...${NC}"
         mate-terminal --title="$window_title" -e bash -c "$automation_script"
+    elif command -v konsole >/dev/null 2>&1; then
+        echo -e "${CYAN}Using Konsole...${NC}"
+        konsole --title "$window_title" -e bash -c "$automation_script"
     elif command -v xterm >/dev/null 2>&1; then
+        echo -e "${CYAN}Using XTerm...${NC}"
         xterm -title "$window_title" -e bash -c "$automation_script" &
+    elif command -v urxvt >/dev/null 2>&1; then
+        echo -e "${CYAN}Using urxvt...${NC}"
+        urxvt -title "$window_title" -e bash -c "$automation_script" &
     else
-        echo -e "${RED}No compatible Linux terminal emulator found${NC}"
-        echo -e "${YELLOW}Please install one of: gnome-terminal, konsole, xfce4-terminal, mate-terminal, or xterm${NC}"
+        echo -e "${RED}No compatible terminal emulator found${NC}"
+        echo -e "${YELLOW}Trying fallback method - running in current terminal...${NC}"
+        echo -e "${CYAN}Testing SSH connection:${NC}"
+        echo ""
+        echo "Target: $user_host:$port"
+        echo "Device: $device_name"
+        echo ""
+        echo -e "${YELLOW}Press Enter to test SSH connection, or 'q' to skip:${NC}"
+        read -r test_choice
+        if [[ "${test_choice,,}" != "q" ]]; then
+            echo "Testing SSH connection..."
+            sshpass -p "$password" ssh -p $port -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user_host "echo 'Connection test successful to $device_name!'; whoami; pwd; exit"
+            if [[ $? -eq 0 ]]; then
+                echo -e "${GREEN}SSH connection test passed!${NC}"
+                echo -e "${YELLOW}Would you like to open an interactive SSH session now? (y/n):${NC}"
+                read -r interactive_choice
+                if [[ "${interactive_choice,,}" == "y" ]]; then
+                    echo "Opening interactive SSH session..."
+                    sshpass -p "$password" ssh -p $port -o StrictHostKeyChecking=no $user_host
+                fi
+            else
+                echo -e "${RED}SSH connection test failed!${NC}"
+                echo "Please check:"
+                echo "1. Network connectivity to $user_host:$port"
+                echo "2. SSH service running on target device"
+                echo "3. Correct password in configuration"
+                echo "4. Device is powered on and accessible"
+            fi
+        fi
         return 1
     fi
     
@@ -191,21 +217,43 @@ open_manual_ssh_terminal() {
     local window_title="SSH - $device_name ($user_host) - Manual"
     
     echo -e "${YELLOW}Opening manual terminal for $device_name...${NC}"
+    echo -e "${CYAN}Debug: Manual connection to $user_host:$port${NC}"
     
-    # Linux terminal emulator detection
-    if command -v gnome-terminal >/dev/null 2>&1; then
-        gnome-terminal --title="$window_title" -- bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
-    elif command -v konsole >/dev/null 2>&1; then
-        konsole --title "$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
+    # Create a command that keeps the terminal open
+    local manual_script="echo 'Connecting to $device_name at $user_host:$port...'; echo 'You will need to enter the password manually'; $ssh_command; echo 'SSH session ended. Press Enter to close...'; read"
+    
+    # Raspberry Pi / Linux terminal detection
+    if command -v x-terminal-emulator >/dev/null 2>&1; then
+        echo -e "${CYAN}Using system default terminal emulator...${NC}"
+        x-terminal-emulator -T "$window_title" -e bash -c "$manual_script" &
+    elif command -v lxterminal >/dev/null 2>&1; then
+        echo -e "${CYAN}Using LXTerminal...${NC}"
+        lxterminal --title="$window_title" -e bash -c "$manual_script" &
+    elif command -v gnome-terminal >/dev/null 2>&1; then
+        echo -e "${CYAN}Using GNOME Terminal...${NC}"
+        gnome-terminal --title="$window_title" -- bash -c "$manual_script"
     elif command -v xfce4-terminal >/dev/null 2>&1; then
-        xfce4-terminal --title="$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
+        echo -e "${CYAN}Using XFCE Terminal...${NC}"
+        xfce4-terminal --title="$window_title" -e bash -c "$manual_script"
     elif command -v mate-terminal >/dev/null 2>&1; then
-        mate-terminal --title="$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash"
+        echo -e "${CYAN}Using MATE Terminal...${NC}"
+        mate-terminal --title="$window_title" -e bash -c "$manual_script"
+    elif command -v konsole >/dev/null 2>&1; then
+        echo -e "${CYAN}Using Konsole...${NC}"
+        konsole --title "$window_title" -e bash -c "$manual_script"
     elif command -v xterm >/dev/null 2>&1; then
-        xterm -title "$window_title" -e bash -c "echo 'Connecting to $device_name...'; $ssh_command; exec bash" &
+        echo -e "${CYAN}Using XTerm...${NC}"
+        xterm -title "$window_title" -e bash -c "$manual_script" &
+    elif command -v urxvt >/dev/null 2>&1; then
+        echo -e "${CYAN}Using urxvt...${NC}"
+        urxvt -title "$window_title" -e bash -c "$manual_script" &
     else
-        echo -e "${RED}No compatible Linux terminal emulator found${NC}"
-        echo -e "${YELLOW}Please install one of: gnome-terminal, konsole, xfce4-terminal, mate-terminal, or xterm${NC}"
+        echo -e "${RED}No compatible terminal emulator found${NC}"
+        echo -e "${YELLOW}Falling back to current terminal...${NC}"
+        echo -e "${CYAN}Connecting manually in current terminal:${NC}"
+        echo "Executing: $ssh_command"
+        echo ""
+        $ssh_command
         return 1
     fi
     
