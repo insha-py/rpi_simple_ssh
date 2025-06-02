@@ -18,7 +18,7 @@ declare -A passwords=()
 
 # Navigation and command configuration
 DOWNLOADS_SUBFOLDER="raspberry_pie_camera_capture"  # Replace with actual subfolder name in Downloads
-SPECIFIC_COMMAND="echo 'Ready to work in raspberry_pie_camera_capture directory'"  # Replace with your specific command
+SPECIFIC_COMMAND="python simple_camera_lsl.py --width 900 --height 600 --fps 100 --duration 30"  # Replace with your specific command
 
 # Colors for output
 RED='\033[0;31m'
