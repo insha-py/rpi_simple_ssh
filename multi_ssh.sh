@@ -7,7 +7,10 @@
 # Configuration - Edit these arrays to match your network devices
 declare -A devices=(
     ["rpi_dawg2"]="dawg2@192.168.0.139" #dawg2
-    ["rpi_dawg6"]="dawg6@192.168.0.142" 
+    ["rpi_dawg6"]="dawg6@192.168.0.142" #dawg6
+    ["rpi_dawg5"]="dawg6@192.168.0.157" #dawg5
+    ["rpi_dawg9"]="dawg6@192.168.0.159" #dawg9
+    ["rpi_dawg"]="dawg@192.168.0.158" #dawg
 )
 
 # Configuration file for sensitive data (passwords, etc.)
