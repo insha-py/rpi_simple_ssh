@@ -28,6 +28,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
 CYAN='\033[0;36m'
 WHITE='\033[1;37m'
 NC='\033[0m' 
@@ -118,7 +119,7 @@ open_ssh_terminal() {
     
     local automation_script="echo 'Connecting to $device_name at $user_host:$port...'; echo 'Password will be provided automatically'; sshpass -p '$password' ssh -p $port -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user_host \"$remote_commands\"; echo 'SSH session ended. Press Enter to close...'; read"
     
-    local window_title="SSH - $device_name ($user_host)"
+    local window_title="Camera" # Replace with ACTUAL window title
     
     echo -e "${YELLOW}Opening automated terminal for $device_name...${NC}"
     echo -e "${CYAN}Debug: Connecting to $user_host:$port${NC}"
@@ -227,7 +228,7 @@ open_manual_ssh_terminal() {
     fi
     
     local ssh_command="ssh -p $port $user_host"
-    local window_title="SSH - $device_name ($user_host) - Manual"
+    local window_title="Camera" # Replace with ACTUAL window title
     
     echo -e "${YELLOW}Opening manual terminal for $device_name...${NC}"
     echo -e "${CYAN}Debug: Manual connection to $user_host:$port${NC}"
